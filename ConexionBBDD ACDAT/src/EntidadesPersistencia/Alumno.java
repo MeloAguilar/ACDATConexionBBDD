@@ -1,16 +1,18 @@
 package EntidadesPersistencia;
 
 import java.time.Instant;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 public class Alumno {
     private int id;
     private String nombre;
     private String apellidos;
-    private Date fechaNacimiento;
+    private String fechaNacimiento;
 
 
-    public Alumno(int id, String nombre, String apellidos, Date fechaNacimiento) {
+    public Alumno(int id, String nombre, String apellidos, String fechaNacimiento) {
         this.id = id;
         this.nombre = nombre;
         this.apellidos = apellidos;
@@ -21,8 +23,37 @@ public class Alumno {
         this.id = 0;
         this.nombre = "";
         this.apellidos = "";
-        this.fechaNacimiento = Date.from(Instant.now());
+        this.fechaNacimiento = "";
     }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public String getApellidos() {
+        return apellidos;
+    }
+
+    public void setApellidos(String apellidos) {
+        this.apellidos = apellidos;
+    }
+
+    public String getFechaNacimiento() {
+        return fechaNacimiento;
+    }
+
 
     @Override
     public String toString() {
@@ -38,4 +69,7 @@ public class Alumno {
                 ========================================""", id, nombre, apellidos, fechaNacimiento.toString());
 
     }
+
+
+
 }

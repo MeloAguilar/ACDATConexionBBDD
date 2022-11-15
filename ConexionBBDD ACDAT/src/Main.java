@@ -1,28 +1,39 @@
+import EntidadesPersistencia.Profesor;
+
+import EntidadesPersistencia.*;
+
 import java.io.File;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 
 public class Main {
 
-    public static void main(String[] args){
-        Gestion gestion = new Gestion();
+    static BusinessLogic bl = new BusinessLogic();
+
+    public static void main(String[] args) {
+
 
         //System.out.println("Se elminiaron " + gestion.deleteTables() + " tablas");
+        List lista;
+       bl.crearTablas();
+        try {
+            lista = bl.listarTabla("Alumnos");
+            for (Object objecto : lista) {
+                System.out.println(objecto.toString());
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
 
-        gestion.getProfesorPorAsignatura("Eolophus roseicapillus");
 
-       /*
 
-       gestion.listarTabla("Profesores");
-        gestion.listarTabla("Alumnos");
-        gestion.listarTabla("Matriculas");
-
-       gestion.crearTablas();
-        gestion.insert(new File("src\\ResourcesSQL\\Alumnos.sql"));
-        gestion.insert(new File("src\\ResourcesSQL\\Profesores.sql"));
-        gestion.insert(new File("src\\ResourcesSQL\\Matriculas.sql"));
-         */
 
 
     }
+
+
 }
 

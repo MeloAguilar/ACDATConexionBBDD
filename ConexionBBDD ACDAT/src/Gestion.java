@@ -16,34 +16,55 @@ public class Gestion {
 
     //Atributos
     private MiConexion conexion;
-    public static final String BBDD = "jdbc:mysql://dns11036.phdns11.es";
-    public static final String USER = "caguilar";
-    public static final String PASS = "caguilar";
+    public static String BBDD = "jdbc:mysql://dns11036.phdns11.es/ad2223_caguilar";
+    public static String USER = "ad2223_caguilar";
+    public static String PASS = "Patatitasexy69";
 
     //End Atributos
+    public MiConexion getConexion() {
+        return conexion;
+    }
 
     //Constructores
-    public Gestion(String nameBBDD, String user, String password)
-    {
+    public Gestion(String nameBBDD, String user, String password) {
+        BBDD = nameBBDD;
+        USER = user;
+        PASS = password;
         conexion = new MiConexion(nameBBDD, user, password);
     }
 
-    public Gestion(){
-        conexion = new MiConexion(BBDD, USER, PASS);
+    public Gestion() {
+        conexion = new MiConexion(BBDD, PASS, USER);
 
     }
 
     //End Constructores
+
     /**
-     * Método que se encarga de crear una tabla dentro de la base de datos
+     * Método que, dado el nombre de una propiedades de la base de propiedades y un Array de Strings
+     * que coincidan en número con los attributos de la propiedades de la que se ha aportado el nombre,
+     * insertará dichos propiedades en la propiedades correspondiente al nombre dado
+     *
+     * <pre>
+     *     -nombreTabla debe coincidir con el nombre de una propiedades de la base de propiedades a la que hagamos referencia.
+     *     -propiedades debe contener una longitud igual al numero de propiedades de la propiedades a la que se hace
+     *     referencia en nombreTabla.
+     * </pre>
+     *
+     * @param nombreTabla
+     * @param propiedades
      */
-    public void crearTabla(String nombreTabla, String[] tabla){
+    public void crearTabla(String nombreTabla, String[] propiedades) {
 
-        StringBuilder peticion = new StringBuilder("CREATE TABLE ad2223_caguilar." + nombreTabla + " (");
 
-        for (int i = 0; i < tabla.length; i++) {
-            peticion.append(tabla[i]);
-            if(i< tabla.length-1){
+        StringBuilder peticion = new StringBuilder("CREATE TABLE ");
+        peticion.append(USER );
+        peticion.append(".");
+        peticion.append(nombreTabla);
+        peticion.append(" (");
+        for (int i = 0; i < propiedades.length; i++) {
+            peticion.append(propiedades[i]);
+            if (i < propiedades.length - 1) {
                 peticion.append(",");
             }
         }
@@ -52,32 +73,19 @@ public class Gestion {
             conexion.abrirConexion();
             Statement sttmt = this.conexion.getConexion().createStatement();
             sttmt.executeUpdate(peticion.toString());
-            System.out.println("Se generó la tabla "+ nombreTabla);
-            System.out.println("Se creó la tabla "+nombreTabla+" con los datos ");
+            System.out.println("Se generó la propiedades " + nombreTabla);
+            System.out.println("Se creó la propiedades " + nombreTabla + " con los propiedades ");
         } catch (SQLException e) {
-            System.out.println("No se pudo insertar la tabla");
+            System.out.println("No se pudo insertar la propiedades");
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
-        }finally {
+        } finally {
             conexion.cerrarConexion();
         }
 
 
     }
 
-
-    /**
-     * Método que se encarga de generar las tablas de la base de datos
-     * @return
-     */
-    public int crearTablas()
-    {
-        int filasAfectadas = 0;
-        crearTabla("Profesores", new String[]{"id int Primary Key AUTO_INCREMENT", "nombre varChar(50)", "apellidos varChar(50)", "fechaNacimiento Date", "antiguedad int"});
-        crearTabla("Alumnos", new String[]{"id int Primary Key AUTO_INCREMENT", "nombre varChar(50)", "apellidos varChar(50)", "fechaNacimiento Date"});
-        crearTabla("Matriculas", new String[]{"id int Primary Key AUTO_INCREMENT", "idProfesor int", "idAlumno int", "asignatura varChar(50)", "curso int", "Foreign Key (idProfesor) References Profesores(id) On delete Cascade on Update Cascade", "Foreign Key (idAlumno) References Alumnos(id) On Delete Cascade on Update Cascade"});
-        return filasAfectadas;
-    }
 
     /**
      * Método que se encarga de enviar una instrucción select al servidor de la base de datos
@@ -86,270 +94,146 @@ public class Gestion {
      * <pre>la petición debe ser una cadena con estilo sql que haga referencia a una tabla de la base de datos
      * que exista</pre>
      * <post>Devolverá un Array de Strings que contendrán todos los datos recibidos de la BBDD</post>
+     *
      * @param peticion
      * @return ResultSet -> result
      */
-    public ResultSet select(String peticion){
-        ResultSet result = null;
+    public ResultSet select(String peticion) throws SQLException, ClassNotFoundException {
 
-            //result = this.conexion.executeQuery(peticion);
+        var statement = this.conexion.abrirConexion().createStatement();
 
 
-        return result;
+        return statement.executeQuery(peticion);
     }
 
 
     /**
-     * Método que se encarga de insertar un dato dentro de una ttabla de la base de datos
-     * @param archivo
-     * @return
+     * nMétodo que se encarga de, dado un string, introducir los datos que contiene en la tabla correspondiente
+     * de la base de datos.
+     *
+     * <pre>
+     *     datos debe tener el siguiente formato. 'NombreTabla values(valor, valor, valor...)'
+     *          donde NombreTabla debe coincidir con el nombre de alguna de las tablas de la base de datos
+     *          y dentro de los parentesis debe haber tantos valores como propedades tenga la tabla.
+     * </pre>
+     *
+     * @param datos
+     * @return filasAfectadas -> será el número de inserciones que se realizaron en la base de datos
      */
-    public int insert(File archivo){
-        String linea;
-        BufferedReader br;
+    public int insertString(String datos) {
+        int filasAfectadas = 0;
         try {
             Statement statement = conexion.abrirConexion().createStatement();
-            br = new BufferedReader(new FileReader(archivo));
-
-            while((linea = br.readLine())!=null){
-                statement.executeUpdate(linea);
-
-            }
-
-            System.out.println("datos insertados correctamente");
+            filasAfectadas = statement.executeUpdate(datos);
         } catch (SQLException e) {
-            System.out.println("No se puede acceder a la base de datos");
+            System.out.println("No se pudo establecer la conexin con el servidor");
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (FileNotFoundException e) {
-            System.out.println("El archivo no se encontró");
-        } catch (IOException e) {
-            System.out.println("Errror de entrada o salida de datos");
-        }
-        finally {
+            System.out.println("Los datos que se intentaron introducir no coinciden con la base de datos");
+        } finally {
             conexion.cerrarConexion();
         }
-        return 0;
+
+        return filasAfectadas;
     }
 
-
-    public int update(String peticion, int id){
-        return 0;
-    }
 
     /**
-     * Método que se encarga, dado un string, de borrar un elemento de la base de datos
+     * @param peticion
+     * @param id
+     * @return
+     */
+    public int updateString(String peticion) {
+        int filasAfectadas = 0;
+        try {
+
+            Statement statement = conexion.abrirConexion().createStatement();
+            filasAfectadas = statement.executeUpdate(peticion);
+        } catch (SQLException e) {
+            System.out.println("No se pudo establecer la conexin con el servidor");
+        } catch (ClassNotFoundException e) {
+            System.out.println("Los datos que se intentaron introducir no coinciden con la base de datos");
+        } finally {
+            conexion.cerrarConexion();
+        }
+
+        return filasAfectadas;
+    }
+
+
+    /**
+     * Método que se encarga de comprobar si una tabla existe o no dentro de la base de datos
+     *
+     *
+     * @param nombreTabla
+     * @return
+     */
+    public boolean testIfExists(String nombreTabla){
+        var exito = false;
+       try(var result = conexion.getConexion().getMetaData().getTables(null,null,nombreTabla,null)) {
+           while(result.next()){
+               String tName = result.getString("TABLE_NAME");
+               if(tName != null && tName.equals(nombreTabla)){
+                   exito = true;
+                   break;
+               }
+           }
+
+
+       }catch (SQLException e){
+           System.out.println("No se pudo acceder a la base de datos");
+       }
+
+        return exito;
+    }
+
+
+    public void deleteTable(String tabla) throws SQLException, ClassNotFoundException {
+        String tablaString = "DROP TABLE " + Gestion.USER + "." + tabla;
+        var stmnt = conexion.abrirConexion().createStatement();
+        stmnt.executeUpdate(String.valueOf(tablaString));
+    }
+
+
+    /**
      * @param sql
      */
-    public void delete(String sql){
+    public void delete(String nombreTabla, int id) {
         try {
+            var datos = new StringBuilder("Delete From ");
+            datos.append(USER);
+            datos.append(".");
+            datos.append(nombreTabla);
+            datos.append(" Where id = ");
+            datos.append(id);
             var stmnt = conexion.abrirConexion().createStatement();
-           stmnt.executeUpdate(sql);
+            stmnt.executeUpdate(String.valueOf(datos));
         } catch (SQLException e) {
             System.out.println("No se pudo eliminar el dato");
         } catch (ClassNotFoundException e) {
-            System.out.println("No se pudo accede a la base de datos");
+            System.out.println("El registro o tabla que intenta elimiar no existe");
         }
 
     }
 
     /**
      * Método que se encarga de borrar una tabla de la base de datos
+     *
      * @param tabla
      */
-    public void deleteTable(String tabla){
-        String tablaString = "DROP TABLE ad2223_caguilar." + tabla;
-        delete(tablaString);
-    }
-
-    /**
-     * Método que se encarga de eliminar todas las tablas de la base de datos
-     * @return
-     */
-    public int deleteTables(){
-        int filasAfectadas = 0;
-        deleteTable("Matriculas");
-        filasAfectadas += 1;
-        deleteTable("Profesores");
-        filasAfectadas += 1;
-        deleteTable("Alumnos");
-        filasAfectadas += 1;
-        return filasAfectadas;
-    }
-
-
-    /**
-     *
-     * @param nombreTabla
-     * @return
-     */
-    public ResultSet listarTabla(String nombreTabla){
-        ResultSet result = null;
-        try {
-
-            var sttmnt = conexion.abrirConexion().createStatement();
-            result = sttmnt.executeQuery("Select * From ad2223_caguilar."+nombreTabla);
-
-            if(nombreTabla.equals("Profesores")){
-
-                int id = 1;
-                while(result.next()){
-                    getProfesorById(result, result.getInt("id"));
-                }
-
-            }else if(nombreTabla.equals("Alumnos")){
-                while(result.next()){
-                    getAlumnoById(result, result.getInt("id"));
-                }
-
-            }else if(nombreTabla.equals("Matriculas")){
-                while(result.next())
-                    getMatriculaById(result, result.getInt("id"));
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        return result;
-    }
-
-
-    /**
-     * Método que se encarga de, dado un ResultSet y un entero,
-     * buscar una posicion dentro de la tabla y devuelve
-     * un objeto de tipo Profesor que coincida con los
-     * datos que recibe del resultset
-     * @param result
-     * @return
-     */
-    public Profesor getProfesorById( int id){
-        Profesor prof = null;
-        String nombre;
-        String apellidos;
-        Date fechaNacimiento;
-        int antiguedad;
-        ResultSet result;
-        try {
-            nombre = result.getNString("nombre");
-            apellidos = result.getNString("apellidos");
-            fechaNacimiento = result.getDate("fechaNacimiento");
-            antiguedad = result.getInt("antiguedad");
-            prof = new Profesor(id, nombre, apellidos, fechaNacimiento, antiguedad);
-            System.out.println(prof);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-        return prof;
-    }
-
-    /**
-     * Método que se encarga de, dado un ResultSet y un entero,
-     * buscar una posicion dentro de la tabla y devuelve
-     * un objeto de tipo Profesor que coincida con los
-     * datos que recibe del resultset
-     * @param result
-     * @return
-     */
-    public Alumno getAlumnoById(ResultSet result, int id){
-        Alumno alumno = null;
-        String nombre;
-        String apellidos;
-        Date fechaNacimiento;
-        try {
-            nombre = result.getNString("nombre");
-            apellidos = result.getNString("apellidos");
-            fechaNacimiento = result.getDate("fechaNacimiento");
-            alumno = new Alumno(id, nombre, apellidos, fechaNacimiento);
-
-            System.out.println(alumno);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-        return alumno;
-    }
-
-    /**
-     * Método que se encarga de, dado un ResultSet y un entero,
-     * buscar una posicion dentro de la tabla y devuelve
-     * un objeto de tipo Matricula que coincida con los
-     * datos que recibe del resultset
-     * @param result
-     * @return
-     */
-    public Matricula getMatriculaById(ResultSet result, int id){
-        Matricula matricula = null;
-        int idProf;
-        int idAlumno;
-        String asignatura;
-        int curso;
-        try {
-
-            idProf = result.getInt("idProfesor");
-            idAlumno = result.getInt("idAlumno");
-            asignatura = result.getString("asignatura");
-            curso = result.getInt("curso");
-            matricula = new Matricula(id, idProf, idAlumno, asignatura, curso);
-            System.out.println(matricula);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-        return matricula;
-    }
-
-
-    /**
-     * Método que se encarga de buscar un profesor segun el id de la as
-     * @param nombreAsignatura
-     * @return
-     */
-    public HashMap<Integer, Profesor> getProfesorPorAsignatura(String nombreAsignatura){
-        HashMap<Integer, Profesor> profes = new HashMap<>();
-        int id;
-        PreparedStatement sttmnt = null;
-        PreparedStatement stm2 = null;
-        try {
-            sttmnt = conexion.abrirConexion().prepareStatement("(Select idProfesor From ad2223_caguilar.Matriculas Where asignatura = ?)");
-            sttmnt.setString(1, nombreAsignatura);
-            var result = sttmnt.executeQuery();
-
-            while(result.next()){
-
-                id =result.getInt("idProfesor");
-                var conn = new MiConexion(BBDD, USER,PASS).abrirConexion();
-                stm2 = conn.prepareStatement("Select * From ad2223_caguilar.Profesores Where id = ?");
-                stm2.setInt(1, id);
-
-                var result2 = stm2.executeQuery();
-                int posicionHMap = 0;
-
-                getProfesorById(result2, id);
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
-
-return profes;
-    }
-
-
-    /**
-     *
-     */
-    public Alumno getAlumnoByNombre(String _nombre){
-        Alumno alumno = new Alumno();
 
 
 
-        return alumno;
-    }
+
+
+
+
+public PreparedStatement getPreparedStatement(String query) throws SQLException, ClassNotFoundException {
+        PreparedStatement statement = null;
+
+        statement = conexion.abrirConexion().prepareStatement(query);
+        return statement;
+}
+
+
 
 }

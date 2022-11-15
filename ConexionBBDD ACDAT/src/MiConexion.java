@@ -22,9 +22,10 @@ public class MiConexion {
 
     /**
      * Método que funciona como opener de conexiones de bases de datos
-     *
+     * <p>
      * Se encarga de recoger la cadena de conexion y convertirla en un
      * objeto Connection
+     *
      * @return
      * @throws ClassNotFoundException
      * @throws SQLException
@@ -33,7 +34,7 @@ public class MiConexion {
         //Referencia al driver jdbc de mysql
         Class.forName("com.mysql.cj.jdbc.Driver");
         //Instanciamos la cadena de conexión
-        this.conexion = DriverManager.getConnection(name,user,password);
+        this.conexion = DriverManager.getConnection(name, user, password);
         return conexion;
     }
 
@@ -41,16 +42,16 @@ public class MiConexion {
     /**
      * Método que se encarga de cerrar la conexion de la clase
      */
-    public void cerrarConexion(){
-        try{
-            if(!this.conexion.isClosed()){
+    public void cerrarConexion() {
+        try {
+            if (!this.conexion.isClosed()) {
                 this.conexion.close();
-            };
+            }
+            ;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
-
 
 
 
