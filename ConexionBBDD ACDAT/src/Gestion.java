@@ -16,6 +16,11 @@ public class Gestion {
 
 
     //Atributos
+
+    public int registrosProfesores = 0;
+    public int registrosAlumnos = 0;
+    public int registrosMAtriculas = 0;
+
     private MiConexion conexion;
     public static String BBDD = "jdbc:mysql://dns11036.phdns11.es/ad2223_caguilar";
     public static String USER = "ad2223_caguilar";
@@ -36,6 +41,14 @@ public class Gestion {
 
     public Gestion() {
         conexion = new MiConexion(BBDD, PASS, USER);
+        try {
+            registrosAlumnos = getTable("Alumnos").getFetchSize();
+            registrosProfesores = getTable("Profesores").getFetchSize();
+            registrosMAtriculas = getTable("Matriculas").getFetchSize();
+        }catch(SQLException e){
+            System.out.println("No existen registros en la tabla o la base de datos no es accesible");
+        }
+
 
     }
 
@@ -127,8 +140,6 @@ public class Gestion {
             System.out.println("Los datos que se intentaron introducir no coinciden con la base de datos");
         } catch (ClassNotFoundException e) {
             System.out.println("No se pudo establecer la conexin con el servidor");
-        } finally {
-            conexion.cerrarConexion();
         }
 
         return filasAfectadas;
@@ -227,6 +238,7 @@ public class Gestion {
         var query = "Select * From ad2223_caguilar. " + nombreTabla;
         ResultSet result = null;
         try {
+            conexion = new MiConexion(BBDD,PASS,USER);
             Statement statement = conexion.abrirConexion().createStatement();
             result = statement.executeQuery(query);
         } catch (SQLException e) {

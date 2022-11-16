@@ -3,16 +3,17 @@ import EntidadesPersistencia.Matricula;
 import EntidadesPersistencia.Profesor;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.List;
-import java.util.Scanner;
+import java.time.Instant;
+import java.time.Month;
+import java.time.MonthDay;
+import java.util.*;
 
 import static java.lang.String.format;
 
 public class menu {
     private BusinessLogic bl;
 
+    //Método que lanza el inicio del menú
     public void iniciarMenu(Scanner sc) {
         bl = new BusinessLogic();
         start(sc);
@@ -119,24 +120,29 @@ public class menu {
                 switch (eleccion) {
                     case 1 -> {
                         var id = getEnteroMenuBuscarPorId(sc, eleccion);
-                        System.out.println(bl.getProfesorById(id));
+                       if(( bl.getProfesorById(id)) != null) {
+                            System.out.println(bl.getProfesorById(id));
+                        }
+
 
                     }
                     case 2 -> {
                         var id = getEnteroMenuBuscarPorId(sc, eleccion);
-                        System.out.println(bl.getAlumnoById(id));
+                        if(( bl.getAlumnoById(id)) != null) {
+                            System.out.println(bl.getAlumnoById(id));
+                        }
 
                     }
                     case 3 -> {
                         var id = getEnteroMenuBuscarPorId(sc, eleccion);
-                        System.out.println(bl.getMatriculaById(id));
-
+                        if(( bl.getMatriculaById(id)) != null) {
+                            System.out.println(bl.getMatriculaById(id));
+                        }
                     }
                     case 0 -> {
                         salir = true;
                     }
                 }
-                sc.next();
             } catch (NumberFormatException e) {
                 System.out.println("Debe introducir un número");
             } catch (ClassNotFoundException s) {
@@ -205,28 +211,23 @@ public class menu {
                 3 = listar Matrículas
                                 
                 ========================================""");
-        System.out.println(menu);
+
         var salir = false;
 
         while (!salir) {
+            System.out.println(menu);
             var eleccion = seleccionarOpcion(sc);
             if (eleccion >= 0 && eleccion <= 3) {
                 try {
                     switch (eleccion) {
                         case 1 -> {
-                            for (Profesor profesor : (ArrayList<Profesor>) bl.listarTabla("Profesores")) {
-                                System.out.println(profesor);
-                            }
+                            bl.listarTabla("Profesores");
                         }
                         case 2 -> {
-                            for (Alumno alumno : (ArrayList<Alumno>) bl.listarTabla("Alumnos")) {
-                                System.out.println(alumno);
-                            }
+                            bl.listarTabla("Alumnos");
                         }
                         case 3 -> {
-                            for (Matricula matricula : (ArrayList<Matricula>) bl.listarTabla("Matriculas")) {
-                                System.out.println(matricula);
-                            }
+                            bl.listarTabla("Matriculas");
 
                         }
                         case 0 -> {
@@ -245,24 +246,40 @@ public class menu {
 
     }
 
-
     private void eliminarRegistro(Scanner sc) {
         System.out.println("inserta el nombre de la tabla en la que se encuentra el registro que desea eliminar");
-        var nombreTabla = sc.nextLine();
+        var nombreTabla = sc.next();
 
         if (bl.gestion.testIfExists(nombreTabla)) {
             try {
-                int id = Integer.parseInt(sc.nextLine());
+                System.out.println("inserta el número de identificacion del registro que desea eliminar");
+                int id = Integer.parseInt(sc.next());
                 bl.gestion.delete(nombreTabla, id);
+                System.out.println("Se eliminó el registro con número de identificación "+id);
             } catch (NumberFormatException e) {
                 System.out.println("El identificador debe ser un numero entero, por lo ue no se eliminó ningun registro de la base de datos");
             }
 
         }
-        System.out.println("inserta el número de identificacion del registro que desea eliminar");
+
     }
 
+    private String formarFecha(String year, String month, String day) throws NumberFormatException{
+        String fecha = "";
+        int _year = Integer.parseInt(year);
+        if(_year >= 1960 && _year <= Date.from(Instant.ofEpochSecond(System.currentTimeMillis())).getYear()){
+            fecha+=year+"-";
+        }
+       try{
+           MonthDay.of(Month.of(Integer.parseInt(month)), Integer.parseInt(day));
+           fecha+=month+"-"+day;
+       }
+       catch(ArrayIndexOutOfBoundsException e){
+           System.out.println("La fecha no es correcta");
+       };
 
+        return fecha;
+    }
     private void menuModificarRegistro(Scanner sc) {
         var menu = format("""
                 =========================================
@@ -274,20 +291,31 @@ public class menu {
                 3 = modificar Matrícula
                                 
                 ========================================""");
-        System.out.println(menu);
+        var salir = false;
+        while(!salir) {
+            System.out.println(menu);
 
-        var eleccion = seleccionarOpcion(sc);
-        switch (eleccion) {
-            case 1 -> {
-                bl.editProfesor(getDatosProfesorCambiar(sc));
-            }
-            case 2 -> {
-                bl.editAlumno(getDatosAlumnoCambiar(sc));
-            }
-            case 3 -> {
-                bl.editMatricula(getDatosMatriculaNuevo(sc));
-            }
+            var eleccion = seleccionarOpcion(sc);
+            switch (eleccion) {
+                case 1 -> {
+                    if (bl.editProfesor(getDatosProfesorCambiar(sc))) {
+                        System.out.println("Se modificó el Profesor con éxito");
+                    }
+                    ;
+                }
+                case 2 -> {
+                    if (bl.editAlumno(getDatosAlumnoCambiar(sc))) {
+                        System.out.println("Se modificó el registro del Alumno");
+                    }
+                }
+                case 3 -> {
+                    if (bl.editMatricula(getDatosMatriculaCambiar(sc))) {
+                        System.out.println("Se modificó la matrícula con éxito");
+                    }
+                    ;
+                }
 
+            }
         }
     }
 
@@ -301,26 +329,69 @@ public class menu {
                 2 = insertar Alumno
                                 
                 3 = insertar Matrícula
+                
+                0 = Salir
                                 
                 ========================================""");
-        System.out.println(menu);
-        var filas = 0;
-        var eleccion = seleccionarOpcion(sc);
-        switch (eleccion) {
-            case 1 -> {
-                filas = bl.insertProfesor(getDatosProfesorNuevo(sc));
-                if(filas > 0){
-                    System.out.println("Se insertaron los datos con éxito");
-                }
-            }
-            case 2 -> {
-                bl.insertAlumno(getDatosAlumnoNuevo(sc));
-            }
-            case 3 -> {
-                bl.insertMatricula(getDatosMatriculaNuevo(sc));
-            }
 
+        var id = 0;
+        var salir = false;
+        while(!salir){
+            System.out.println(menu);
+            var filas = 0;
+            var eleccion = seleccionarOpcion(sc);
+            switch (eleccion) {
+                case 1 -> {
+                    filas = bl.insertProfesor(getDatosProfesorNuevo(sc));
+                    if(filas > 0){
+                        System.out.println("Se insertaron los datos con éxito");
+                        try {
+                            bl.cantidadProfesores++;
+                            id += bl.cantidadProfesores;
+                            var professor = bl.getProfesorById(id);
+                            System.out.println(professor);
+                        } catch (ClassNotFoundException e) {
+                            System.out.println("No se encontró el registro que buscaba");
+                        }
+                    }
+                }
+                case 2 -> {
+
+                    var datos = new String[3];
+                    var lista = (getDatosAlumnoNuevo(sc));
+                    for (int i = 0 ; i < lista.size(); i++) {
+                        datos[i] = lista.get(i);
+                    }
+                    filas = bl.insertAlumno(datos);
+                    if(filas > 0){
+                        System.out.println("Se insertaron los datos con éxito");
+
+                        var alumno = bl.getAlumnoById(++bl.cantidadAlumnos);
+                        System.out.println(alumno);
+
+                    }
+                }
+                case 3 -> {
+                    filas = bl.insertMatricula(getDatosMatriculaNuevo(sc));
+                    if(filas > 0){
+                        System.out.println("Se insertaron los datos con éxito");
+                        try {
+                            bl.cantidadMatriculas++;
+                            id = bl.cantidadMatriculas;
+                            var matricula = bl.getProfesorById(id);
+                            System.out.println(matricula);
+                        } catch (ClassNotFoundException e) {
+                            System.out.println("No se encontró el registro que buscaba");
+                        }
+                    }
+                }
+                case 0 -> {
+                    salir =true;
+                }
+
+            }
         }
+
     }
 
 
@@ -333,6 +404,7 @@ public class menu {
      * @return
      */
     private String[] getDatosMatriculaNuevo(Scanner sc) {
+        sc = new Scanner(System.in);
         String[] datos = new String[4];
         System.out.println("introduzca el id del Profesor que imparte la asignatura");
         datos[0] = sc.nextLine();
@@ -355,15 +427,25 @@ public class menu {
      * @param sc
      * @return
      */
-    private String[] getDatosAlumnoNuevo(Scanner sc) {
-        String[] datos = new String[3];
-        System.out.println("introduzca el nombre del Alumno");
-        datos[0] = sc.nextLine();
-        System.out.println("introduzca los apellidos del Alumno");
-        datos[1] = sc.nextLine();
-        System.out.println("introduzca la fecha de nacimiento del alumno en formato dd/mm/yyyy");
-        datos[2] = sc.nextLine();
+    private List<String> getDatosAlumnoNuevo(Scanner sc) {
+        sc = new Scanner(System.in);
+        List<String> datos = new ArrayList<>();
 
+        System.out.println("introduzca el nombre del Alumno");
+        datos.add(sc.nextLine());
+        System.out.println("introduzca los apellidos del Alumno");
+        datos.add(sc.nextLine());
+        try {
+            System.out.println("introduzca el año de nacimiento del alumno");
+            var year = sc.nextLine();
+            System.out.println("introduzca el mes de nacimiento del alumno");
+            var month = sc.nextLine();
+            System.out.println("introduzca el día de nacimiento del alumno");
+            var day = sc.nextLine();
+            datos.add(formarFecha(year, month, day));
+        }catch(Exception e){
+            System.out.println("Debe introducir una fecha válida");
+        }
         return datos;
     }
 
@@ -383,11 +465,25 @@ public class menu {
         datos[0] = sc.nextLine();
         System.out.println("introduzca los apellidos del Profesor");
         datos[1] = sc.nextLine();
-        System.out.println("introduzca la fecha de nacimiento del profesor en formato dd/mm/yyyy");
-        datos[2] = sc.nextLine();
-        System.out.println("introduzca los años de antigüedad en la docencia");
-        datos[3] = sc.nextLine();
+        var salir = false;
+        while(!salir) {
+            try {
+                System.out.println("introduzca el año de nacimiento del profesor");
+                var year = sc.nextLine();
+                System.out.println("introduzca el mes de nacimiento del profesor");
+                var month = sc.nextLine();
+                System.out.println("introduzca el día de nacimiento del profesor");
+                var day = sc.nextLine();
+                datos[2] = formarFecha(year, month, day);
 
+                System.out.println("introduzca los años de antigüedad en la docencia");
+                datos[3] = sc.nextLine();
+                salir = true;
+            } catch (Exception e) {
+                System.out.println("Algo salió mal, vuelva a introducir la fecha..");
+            }
+
+        }
         return datos;
     }
 
@@ -424,20 +520,27 @@ public class menu {
      * @return
      */
     private String[] getDatosAlumnoCambiar(Scanner sc) {
-        List<String> _datos = new ArrayList<>();
+        sc = new Scanner(System.in);
+        String[] datos = new  String[4];
 
         System.out.println("introduce el número de identificación del ALumno");
+        var datosAlumno = new String[4];
         try {
             var id = Integer.parseInt(sc.nextLine());
             System.out.println(bl.getAlumnoById(id));
-            var datosAlumno = getDatosAlumnoNuevo(sc);
-            for (String dato : datosAlumno) {
-                _datos.add(dato);
+
+            var lista = new ArrayList<String>();
+            lista.add(String.valueOf(id));
+            lista.addAll(getDatosAlumnoNuevo(sc));
+
+
+            for (int i  = 0 ; i < lista.size();i++) {
+                datosAlumno[i] = lista.get(i);
             }
         } catch (NumberFormatException e) {
             System.out.println("El identificador del Profesor debe ser un numero entero");
         }
-        return (String[]) _datos.toArray();
+        return datosAlumno;
     }
 
     /**

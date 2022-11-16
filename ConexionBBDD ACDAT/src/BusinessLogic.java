@@ -146,7 +146,7 @@ public class BusinessLogic {
                 //Relleno el arrayList de profesores
                 while (result.next()) {
                     var profesor = new Profesor(result.getInt(1), result.getString(2),result.getString(3), result.getDate(4).toString(), result.getInt(5));
-                    lista.add(profesor);
+                    System.out.println(profesor);
                 }
 
                 //Si el nombre de la tabla es Alumnos
@@ -155,7 +155,7 @@ public class BusinessLogic {
                 //Genero el arrayList de Alumnos
                 while (result.next()) {
                     var alumno = new Alumno(result.getInt(1), result.getString(2),result.getString(3), result.getDate(4).toString());
-                    lista.add(alumno);
+                    System.out.println(alumno);
                 }
 
                 //Si el nombre de la tabla es Matriculas
@@ -164,7 +164,7 @@ public class BusinessLogic {
                 //Genero el arrayList de Matriculas
                 while (result.next()) {
                     var matricula = new Matricula(result.getInt(1), result.getInt(2), result.getInt(3), result.getString(4), result.getInt(5));
-                    lista.add(matricula);
+                    System.out.println(matricula);
                 }
             }
         } catch (SQLException s) {
@@ -188,11 +188,17 @@ public class BusinessLogic {
         var exito = false;
         if ((getAlumnoById(Integer.parseInt(datos[0]))) != null) {
             var datosReales = new StringBuilder("Update Alumnos set nombre = ");
+            datosReales.append("'");
             datosReales.append(datos[1]);
-            datosReales.append(" apellidos = ");
+            datosReales.append("'");
+            datosReales.append(", apellidos = ");
+            datosReales.append("'");
             datosReales.append(datos[2]);
-            datosReales.append(" fechaNacimiento = ");
+            datosReales.append("'");
+            datosReales.append(", fechaNacimiento = ");
+            datosReales.append("'");
             datosReales.append(datos[3]);
+            datosReales.append("'");
             datosReales.append(" Where id = ");
             datosReales.append(datos[0]);
             gestion.updateString(String.valueOf(datosReales));
@@ -217,11 +223,13 @@ public class BusinessLogic {
         if ((getMatriculaById(Integer.parseInt(datos[0]))) != null) {
             var datosReales = new StringBuilder("Update Matriculas set idProfesor = ");
             datosReales.append(datos[1]);
-            datosReales.append(" idAlumno = ");
+            datosReales.append(", idAlumno = ");
             datosReales.append(datos[2]);
-            datosReales.append(" asignatura = ");
+            datosReales.append(", asignatura = ");
+            datosReales.append("'");
             datosReales.append(datos[3]);
-            datosReales.append(" curso = ");
+            datosReales.append("'");
+            datosReales.append(", curso = ");
             datosReales.append(datos[4]);
 
             datosReales.append(" Where id = ");
@@ -335,7 +343,7 @@ public class BusinessLogic {
             fechaNacimiento = result.getDate("fechaNacimiento").toString();
             alumno = new Alumno(id, nombre, apellidos, fechaNacimiento);
         } catch (SQLException e) {
-            System.out.println("Columna no válida");
+            System.out.println("No se obtuvo ningún registro");
         } catch (ClassNotFoundException e) {
             System.out.println("No se pudo obtener informacion de los datos introducidos");
         }
@@ -396,11 +404,6 @@ public class BusinessLogic {
 
     public int insertProfesor(String[] datos) {
         StringBuilder dat = new StringBuilder("Insert into ad2223_caguilar.Profesores (nombre, apellidos, fechaNacimiento, antiguedad) values (");
-        return createString(datos, dat);
-    }
-
-    private int createString(String[] datos, StringBuilder dat) {
-
         dat.append("'");
         dat.append(datos[0]);
         dat.append("'");
@@ -409,7 +412,9 @@ public class BusinessLogic {
         dat.append(datos[1]);
         dat.append("'");
         dat.append(", ");
+        dat.append("'");
         dat.append(datos[2]);
+        dat.append("'");
         dat.append(", ");
         dat.append(datos[3]);
 
@@ -418,15 +423,22 @@ public class BusinessLogic {
         return filasAfectadas;
     }
 
-    public void insertAlumno(String[] datos) {
+
+    public int insertAlumno(String[] datos) {
         StringBuilder dat = new StringBuilder("Insert into ad2223_caguilar.Alumnos (nombre, apellidos, fechaNacimiento) values (");
+        dat.append("'");
         dat.append(datos[0]);
+        dat.append("'");
         dat.append(", ");
+        dat.append("'");
         dat.append(datos[1]);
+        dat.append("'");
         dat.append(", ");
+        dat.append("'");
         dat.append(datos[2]);
+        dat.append("'");
         dat.append(")");
-        gestion.insertString(String.valueOf(dat));
+        return gestion.insertString(String.valueOf(dat));
     }
 
 
@@ -435,13 +447,26 @@ public class BusinessLogic {
      *
      * @param datos
      */
-    public void insertMatricula(String[] datos) {
+    public int insertMatricula(String[] datos) {
+        var filas = 0;
         try {
             var profesr = getProfesorById(Integer.parseInt(datos[0]));
             var alumno = getAlumnoById(Integer.parseInt(datos[1]));
             if (profesr != null && alumno != null) {
                 StringBuilder dat = new StringBuilder("Insert into ad2223_caguilar.Matriculas(idProfesor, idAlumno, asignatura, curso) values (");
-                createString(datos, dat);
+                dat.append(datos[0]);
+                dat.append(", ");
+                dat.append(datos[1]);
+                dat.append(", ");
+                dat.append("'");
+                dat.append(datos[2]);
+                dat.append("'");
+                dat.append(", ");
+                dat.append(datos[3]);
+
+                dat.append(")");
+                filas = gestion.insertString(String.valueOf(dat));
+
             } else {
                 System.out.println("idProfesor e idAlumno deben coincidir con un registro de la base de datos.");
             }
@@ -451,6 +476,7 @@ public class BusinessLogic {
             System.out.println("isProfesor e idAlumnos deben ser números enteros");
         }
 
+return filas;
     }
 
 
