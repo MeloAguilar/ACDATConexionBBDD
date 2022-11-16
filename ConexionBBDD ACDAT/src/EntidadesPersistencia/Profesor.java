@@ -12,12 +12,12 @@ public class Profesor {
     private int id;
     private String nombre;
     private String apellidos;
-    private Date fechaNacimiento;
+    private String fechaNacimiento;
     private int antiguedad;
     //End Atributos
 
     //Constructores
-    public Profesor(int _id, String _nombre, String _apellidos, Date _fechaNac, int _antiguedad){
+    public Profesor(int _id, String _nombre, String _apellidos, String _fechaNac, int _antiguedad){
         this.id = _id;
         this.nombre = _nombre;
         this.apellidos = _apellidos;
@@ -29,7 +29,7 @@ public class Profesor {
         this.id = 0;
         this.nombre = "";
         this.apellidos = "";
-        this.fechaNacimiento = Date.from(Instant.now());
+        this.fechaNacimiento = Date.from(Instant.now()).toString();
         this.antiguedad = 0;
     }
 //End Constructores
@@ -48,6 +48,6 @@ public class Profesor {
                 fechaNacimiento = %s
                 
                 antigüedad = %d
-                ========================================""", id, nombre, apellidos, fechaNacimiento.toString(), antiguedad);
+                ========================================""", id, nombre, apellidos, fechaNacimiento, antiguedad);
     }
 }

@@ -44,6 +44,7 @@ public class MiConexion {
      */
     public void cerrarConexion() {
         try {
+
             if (!this.conexion.isClosed()) {
                 this.conexion.close();
             }

@@ -2,34 +2,21 @@ import EntidadesPersistencia.Profesor;
 
 import EntidadesPersistencia.*;
 
+import java.awt.*;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 public class Main {
 
-    static BusinessLogic bl = new BusinessLogic();
+    static menu menu = new menu();
 
     public static void main(String[] args) {
 
-
-        //System.out.println("Se elminiaron " + gestion.deleteTables() + " tablas");
-        List lista;
-       bl.crearTablas();
-        try {
-            lista = bl.listarTabla("Alumnos");
-            for (Object objecto : lista) {
-                System.out.println(objecto.toString());
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
-
-
+       Scanner sc  =new Scanner(System.in);
+        menu.iniciarMenu(sc);
 
 
     }

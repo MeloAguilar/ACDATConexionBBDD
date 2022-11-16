@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 public class Gestion {
 
@@ -58,7 +59,7 @@ public class Gestion {
 
 
         StringBuilder peticion = new StringBuilder("CREATE TABLE ");
-        peticion.append(USER );
+        peticion.append(USER);
         peticion.append(".");
         peticion.append(nombreTabla);
         peticion.append(" (");
@@ -88,26 +89,6 @@ public class Gestion {
 
 
     /**
-     * Método que se encarga de enviar una instrucción select al servidor de la base de datos
-     * y devuelve un ResultSet
-     *
-     * <pre>la petición debe ser una cadena con estilo sql que haga referencia a una tabla de la base de datos
-     * que exista</pre>
-     * <post>Devolverá un Array de Strings que contendrán todos los datos recibidos de la BBDD</post>
-     *
-     * @param peticion
-     * @return ResultSet -> result
-     */
-    public ResultSet select(String peticion) throws SQLException, ClassNotFoundException {
-
-        var statement = this.conexion.abrirConexion().createStatement();
-
-
-        return statement.executeQuery(peticion);
-    }
-
-
-    /**
      * nMétodo que se encarga de, dado un string, introducir los datos que contiene en la tabla correspondiente
      * de la base de datos.
      *
@@ -121,19 +102,8 @@ public class Gestion {
      * @return filasAfectadas -> será el número de inserciones que se realizaron en la base de datos
      */
     public int insertString(String datos) {
-        int filasAfectadas = 0;
-        try {
-            Statement statement = conexion.abrirConexion().createStatement();
-            filasAfectadas = statement.executeUpdate(datos);
-        } catch (SQLException e) {
-            System.out.println("No se pudo establecer la conexin con el servidor");
-        } catch (ClassNotFoundException e) {
-            System.out.println("Los datos que se intentaron introducir no coinciden con la base de datos");
-        } finally {
-            conexion.cerrarConexion();
-        }
 
-        return filasAfectadas;
+        return modify(datos);
     }
 
 
@@ -143,15 +113,20 @@ public class Gestion {
      * @return
      */
     public int updateString(String peticion) {
+        return modify(peticion);
+    }
+
+    private int modify(String peticion) {
         int filasAfectadas = 0;
         try {
 
             Statement statement = conexion.abrirConexion().createStatement();
             filasAfectadas = statement.executeUpdate(peticion);
+            statement.close();
         } catch (SQLException e) {
-            System.out.println("No se pudo establecer la conexin con el servidor");
-        } catch (ClassNotFoundException e) {
             System.out.println("Los datos que se intentaron introducir no coinciden con la base de datos");
+        } catch (ClassNotFoundException e) {
+            System.out.println("No se pudo establecer la conexin con el servidor");
         } finally {
             conexion.cerrarConexion();
         }
@@ -163,30 +138,36 @@ public class Gestion {
     /**
      * Método que se encarga de comprobar si una tabla existe o no dentro de la base de datos
      *
-     *
      * @param nombreTabla
      * @return
      */
-    public boolean testIfExists(String nombreTabla){
+    public boolean testIfExists(String nombreTabla) {
         var exito = false;
-       try(var result = conexion.getConexion().getMetaData().getTables(null,null,nombreTabla,null)) {
-           while(result.next()){
-               String tName = result.getString("TABLE_NAME");
-               if(tName != null && tName.equals(nombreTabla)){
-                   exito = true;
-                   break;
-               }
-           }
+        try (var result = conexion.getConexion().getMetaData().getTables(null, null, nombreTabla, null)) {
+            while (result.next()) {
+                String tName = result.getString("TABLE_NAME");
+                if (tName != null && tName.equals(nombreTabla)) {
+                    exito = true;
+                    break;
+                }
+            }
 
 
-       }catch (SQLException e){
-           System.out.println("No se pudo acceder a la base de datos");
-       }
+        } catch (SQLException e) {
+            System.out.println("No se pudo acceder a la base de datos");
+        }
 
         return exito;
     }
 
 
+    /**
+     * Método que se encarga de eliminar una tabla de la base de datos
+     *
+     * @param tabla
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
     public void deleteTable(String tabla) throws SQLException, ClassNotFoundException {
         String tablaString = "DROP TABLE " + Gestion.USER + "." + tabla;
         var stmnt = conexion.abrirConexion().createStatement();
@@ -195,7 +176,8 @@ public class Gestion {
 
 
     /**
-     * @param sql
+     * @param nombreTabla
+     * @param id
      */
     public void delete(String nombreTabla, int id) {
         try {
@@ -222,18 +204,38 @@ public class Gestion {
      */
 
 
+    /**
+     * Método que se encarga de, dada una string que contenga una sentencia SELECT
+     * SQL y el id del registro, devuelve un resultSet con ese registro
+     *
+     * @param query
+     * @param id
+     * @return
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
+    public ResultSet getSelectResultSet(String query, int id) throws SQLException, ClassNotFoundException {
+        var _conexion = conexion.abrirConexion();
+        PreparedStatement statement = _conexion.prepareStatement(query);
+        statement.setInt(1, id);
+        statement.executeQuery();
+        return statement.getResultSet();
+    }
 
 
-
-
-
-public PreparedStatement getPreparedStatement(String query) throws SQLException, ClassNotFoundException {
-        PreparedStatement statement = null;
-
-        statement = conexion.abrirConexion().prepareStatement(query);
-        return statement;
-}
-
+    public ResultSet getTable(String nombreTabla){
+        var query = "Select * From ad2223_caguilar. " + nombreTabla;
+        ResultSet result = null;
+        try {
+            Statement statement = conexion.abrirConexion().createStatement();
+            result = statement.executeQuery(query);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
 
 
 }

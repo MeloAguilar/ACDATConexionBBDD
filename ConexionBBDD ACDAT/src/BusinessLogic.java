@@ -13,10 +13,38 @@ import java.util.List;
 
 public class BusinessLogic {
 
+    int cantidadProfesores = 0;
+    int cantidadMatriculas = 0;
+    int cantidadAlumnos = 0;
     public Gestion gestion;
 
     public BusinessLogic() {
+
         gestion = new Gestion();
+        ResultSet result = gestion.getTable("Alumnos");
+        try {
+            while (result.next()) {
+                cantidadAlumnos++;
+            }
+        }catch (SQLException we){
+            System.out.println("No se pudo acceder");
+        }
+        result = gestion.getTable("Alumnos");
+        try{
+            while (result.next()){
+                cantidadProfesores++;
+            }
+        }catch (SQLException we){
+            System.out.println("No se pudo acceder");
+        }
+        result = gestion.getTable("Matriculas");
+        try{
+            while (result.next()){
+                cantidadMatriculas++;
+            }
+        }catch (SQLException we){
+            System.out.println("No se pudo acceder");
+        }
     }
 
     public BusinessLogic(String bbdd, String user, String pass) {
@@ -67,10 +95,19 @@ public class BusinessLogic {
         } catch (IOException e) {
             System.out.println("Errror de entrada o salida de datos");
         } finally {
-            gestion.getConexion().cerrarConexion();
+            if (gestion.getConexion().getConexion() != null){
+                gestion.getConexion().cerrarConexion();
+            }
+
         }
         return 0;
     }
+
+
+
+
+
+
 
     /**
      * Método que se encarga de eliminar una tabla de la base de datos
@@ -97,22 +134,19 @@ public class BusinessLogic {
 
 
         //Genero la cadena de la select
-        StringBuilder datos = new StringBuilder("Select * From ");
-        datos.append(gestion.USER);
-        datos.append(".");
-        datos.append(nombreTabla);
         List lista = null;
         try {
             //Gracias al método de la clase gestion lanzo la peticion y recojo el resultSet
-            ResultSet result = gestion.select(String.valueOf(datos));
+            ResultSet result = gestion.getTable(nombreTabla);
 
 
             //Si el nomrbe de la tabla es Profesores
             if (nombreTabla.equals("Profesores")) {
                 lista = new ArrayList<Profesor>();
-                //Rellenop el arrayList de profesores
+                //Relleno el arrayList de profesores
                 while (result.next()) {
-                    lista.add(getProfesorById(result.getInt("id")));
+                    var profesor = new Profesor(result.getInt(1), result.getString(2),result.getString(3), result.getDate(4).toString(), result.getInt(5));
+                    lista.add(profesor);
                 }
 
                 //Si el nombre de la tabla es Alumnos
@@ -120,17 +154,20 @@ public class BusinessLogic {
                 lista = new ArrayList<Alumno>();
                 //Genero el arrayList de Alumnos
                 while (result.next()) {
-                    lista.add(getAlumnoById(result.getInt("id")));
+                    var alumno = new Alumno(result.getInt(1), result.getString(2),result.getString(3), result.getDate(4).toString());
+                    lista.add(alumno);
                 }
 
                 //Si el nombre de la tabla es Matriculas
             } else if (nombreTabla.equals("Matriculas")) {
                 lista = new ArrayList<Matricula>();
                 //Genero el arrayList de Matriculas
-                while (result.next())
-                    lista.add(getMatriculaById(result.getInt("id")));
+                while (result.next()) {
+                    var matricula = new Matricula(result.getInt(1), result.getInt(2), result.getInt(3), result.getString(4), result.getInt(5));
+                    lista.add(matricula);
+                }
             }
-        }catch(SQLException s){
+        } catch (SQLException s) {
             System.out.println("No se pudo acceder a la base de datos");
         }
 
@@ -139,38 +176,6 @@ public class BusinessLogic {
     }
 
 
-    /**
-     * Método que se encarga de, dado un ResultSet y un entero,
-     * buscar una posicion dentro de la tabla y devuelve
-     * un objeto de tipo Profesor que coincida con los
-     * datos que recibe del resultset
-     *
-     * @param id id correspondiente a un registro de la tabla Profesores
-     * @return
-     */
-    public Profesor getProfesorById(int id) throws ClassNotFoundException {
-        Profesor prof = null;
-        String nombre;
-        String apellidos;
-        Date fechaNacimiento;
-        int antiguedad;
-        ResultSet result;
-        //Le pido el resultSet de la query a la clase gestion
-        try {
-            result = gestion.select("Select * From ad2223_caguilar.Profesores where id = " + id);
-            //Establezco los datos que contendra el objeto Profesor
-            nombre = result.getNString("nombre");
-            apellidos = result.getNString("apellidos");
-            fechaNacimiento = result.getDate("fechaNacimiento");
-            antiguedad = result.getInt("antiguedad");
-            prof = new Profesor(id, nombre, apellidos, fechaNacimiento, antiguedad);
-        } catch (SQLException e) {
-            System.out.println("No se pudo acceder a la base de datos");
-        }
-        //Instancio el profesor
-
-        return prof;
-    }
 
 
     /**
@@ -204,7 +209,7 @@ public class BusinessLogic {
      * Método que se encarga de modificar un registro de la tabla profesores de la base de datos
      *
      * @param datos
-     * @return
+     * @return exito
      */
     public boolean editMatricula(String[] datos) {
         var exito = false;
@@ -236,7 +241,7 @@ public class BusinessLogic {
      * Método que se encarga de modificar un registro de la tabla profesores de la base de datos
      *
      * @param datos
-     * @return
+     * @return exito
      */
     public boolean editProfesor(String[] datos) {
         var exito = false;
@@ -258,66 +263,50 @@ public class BusinessLogic {
                 System.out.println("El registro no se encontró en la base de datos");
             }
 
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
         return exito;
     }
 
+
     /**
-     * Método que se encarga de buscar un listado de objetos
-     * profesor segun el nombre de la asignatura que imparte
+     * Método que se encarga de, dado un ResultSet y un entero,
+     * buscar una posicion dentro de la tabla y devuelve
+     * un objeto de tipo Profesor que coincida con los
+     * datos que recibe del resultset
      *
-     * @param nombreAsignatura
+     * @param id id correspondiente a un registro de la tabla Profesores
      * @return
      */
-    public Profesor getProfesoresPorAsignatura(String nombreAsignatura) {
-        Profesor profesor = new Profesor();
-        int id;
-        PreparedStatement sttmnt = null;
+    public Profesor getProfesorById(int id) throws ClassNotFoundException {
+        Profesor prof = null;
+        String nombre;
+        String apellidos;
+        Date fechaNacimiento;
+        int antiguedad;
+        ResultSet result;
+        //Le pido el resultSet de la query a la clase gestion
         try {
-            sttmnt = gestion.getPreparedStatement("(Select idProfesor From ad2223_caguilar.Matriculas Where asignatura = ?)");
-            sttmnt.setString(1, nombreAsignatura);
-            var result = sttmnt.executeQuery();
-
-            while (result.next()) {
-
-                id = result.getInt("idProfesor");
 
 
-                profesor = getProfesorById(id);
-            }
 
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+            result = gestion.getSelectResultSet("Select * From ad2223_caguilar.Profesores where id = ? ", id);
 
-
-        return profesor;
-    }
-
-
-    /**
-     * Método que, dado un String que coincida con el nombre d un alumno de la base de datos
-     * instancia un objeto de tipo Alumno y lo devuelve.
-     */
-    public Alumno getAlumnoByNombre(String _nombre) {
-        Alumno alumno = null;
-
-        try {
-            ResultSet result = gestion.select("Select * From ad2223_caguilar.Alumnos Where Nombre = " + _nombre);
-            alumno = new Alumno(result.getInt("id"), result.getString("nombre"), result.getString("apellidos"), result.getDate("fechaNacimiento").toString());
+            result.next();
+            //Establezco los datos que contendra el objeto Profesor
+            result.getInt(1);
+            nombre = result.getString(2);
+            apellidos = result.getString(3);
+            fechaNacimiento = result.getDate(4);
+            antiguedad = result.getInt(5);
+            prof = new Profesor(id, nombre, apellidos, fechaNacimiento.toString(), antiguedad);
         } catch (SQLException e) {
             System.out.println("No se pudo acceder a la base de datos");
-        } catch (ClassNotFoundException e) {
-            System.out.println("Los datos introducidos no son correctos");
         }
+        //Instancio el profesor
 
-        return alumno;
+        return prof;
     }
 
     /**
@@ -326,8 +315,8 @@ public class BusinessLogic {
      * un objeto de tipo Profesor que coincida con los
      * datos que recibe del resultset
      *
-     * @param result
-     * @return
+     * @param id
+     * @return alumno
      */
     public Alumno getAlumnoById(int id) {
         Alumno alumno = null;
@@ -336,17 +325,15 @@ public class BusinessLogic {
         String fechaNacimiento;
         StringBuilder datos = new StringBuilder("Select * From ");
         datos.append(gestion.USER);
-        datos.append(".Alumnos Where id=");
-        datos.append(id);
+        datos.append(".Alumnos Where id=?");
         ResultSet result;
         try {
-            result = gestion.select(String.valueOf(datos));
-            nombre = result.getNString("nombre");
-            apellidos = result.getNString("apellidos");
+            result = gestion.getSelectResultSet(String.valueOf(datos), id);
+            result.next();
+            nombre = result.getString("nombre");
+            apellidos = result.getString("apellidos");
             fechaNacimiento = result.getDate("fechaNacimiento").toString();
             alumno = new Alumno(id, nombre, apellidos, fechaNacimiento);
-
-            System.out.println(alumno);
         } catch (SQLException e) {
             System.out.println("Columna no válida");
         } catch (ClassNotFoundException e) {
@@ -372,17 +359,16 @@ public class BusinessLogic {
         int curso;
         var datos = new StringBuilder("Select * From ");
         datos.append(gestion.USER);
-        datos.append(".Matriculas Where id = ");
-        datos.append(id);
+        datos.append(".Matriculas Where id = ?");
         ResultSet result;
         try {
-            result = gestion.select(String.valueOf(datos));
+            result = gestion.getSelectResultSet(String.valueOf(datos), id);
+            result.next();
             idProf = result.getInt("idProfesor");
             idAlumno = result.getInt("idAlumno");
             asignatura = result.getString("asignatura");
             curso = result.getInt("curso");
             matricula = new Matricula(id, idProf, idAlumno, asignatura, curso);
-            System.out.println(matricula);
         } catch (SQLException e) {
             System.out.println("Columna no válida");
         } catch (ClassNotFoundException e) {
@@ -392,21 +378,6 @@ public class BusinessLogic {
         return matricula;
     }
 
-
-    public int updatePropiedadAlumno(String propiedad, String dato, int id) {
-        int filasAfectadas = 0;
-        var datos = new StringBuilder("Update ");
-        datos.append(gestion.USER);
-        datos.append(".Alumnos set ");
-        datos.append(propiedad);
-        datos.append("=");
-        datos.append(dato);
-        datos.append("Where id = ");
-        datos.append(id);
-
-        filasAfectadas = gestion.updateString(String.valueOf(datos));
-        return filasAfectadas;
-    }
 
     /**
      * Método que se encarga de generar las tablas de la base de datos
@@ -423,21 +394,32 @@ public class BusinessLogic {
     }
 
 
-    public void insertProfesor(String[] datos) {
-        StringBuilder dat = new StringBuilder("Insert into ad2223_caguilar.Profesores(nombre, apellidos, fechaNacimiento, antiguedad) values (");
+    public int insertProfesor(String[] datos) {
+        StringBuilder dat = new StringBuilder("Insert into ad2223_caguilar.Profesores (nombre, apellidos, fechaNacimiento, antiguedad) values (");
+        return createString(datos, dat);
+    }
+
+    private int createString(String[] datos, StringBuilder dat) {
+
+        dat.append("'");
         dat.append(datos[0]);
+        dat.append("'");
         dat.append(", ");
+        dat.append("'");
         dat.append(datos[1]);
+        dat.append("'");
         dat.append(", ");
         dat.append(datos[2]);
         dat.append(", ");
         dat.append(datos[3]);
+
         dat.append(")");
-        gestion.insertString(String.valueOf(dat));
+        int filasAfectadas = gestion.insertString(String.valueOf(dat));
+        return filasAfectadas;
     }
 
     public void insertAlumno(String[] datos) {
-        StringBuilder dat = new StringBuilder("Insert into ad2223_caguilar.Alumnos(nombre, apellidos, fechaNacimiento) values (");
+        StringBuilder dat = new StringBuilder("Insert into ad2223_caguilar.Alumnos (nombre, apellidos, fechaNacimiento) values (");
         dat.append(datos[0]);
         dat.append(", ");
         dat.append(datos[1]);
@@ -459,22 +441,12 @@ public class BusinessLogic {
             var alumno = getAlumnoById(Integer.parseInt(datos[1]));
             if (profesr != null && alumno != null) {
                 StringBuilder dat = new StringBuilder("Insert into ad2223_caguilar.Matriculas(idProfesor, idAlumno, asignatura, curso) values (");
-                dat.append(datos[0]);
-                dat.append(", ");
-                dat.append(datos[1]);
-                dat.append(", ");
-                dat.append(datos[2]);
-                dat.append(", ");
-                dat.append(datos[3]);
-                dat.append(")");
-                gestion.insertString(String.valueOf(dat));
+                createString(datos, dat);
             } else {
                 System.out.println("idProfesor e idAlumno deben coincidir con un registro de la base de datos.");
             }
         } catch (NumberFormatException e) {
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+            System.out.println("Debe introducir un numero entero");
         } catch (ClassNotFoundException e) {
             System.out.println("isProfesor e idAlumnos deben ser números enteros");
         }
